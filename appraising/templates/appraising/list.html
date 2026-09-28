@@ -1,0 +1,17 @@
+{% extends 'appraising/layout.html' %}
+
+{% block content %}
+    <h1>All Appraisals</h1>
+    <ul>
+        {% for id, app in appraisals.items %}
+            <li>
+                <a href="{% url 'detail' id %}">{{ app.vehicle }}</a> - {{ app.issue }}
+                {% if app.value > 1000 %}
+                    <span class="badge">High Value</span>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li>No appraisals currently logged.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

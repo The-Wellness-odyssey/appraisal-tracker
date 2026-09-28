@@ -1,0 +1,12 @@
+{% extends 'appraising/layout.html' %}
+
+{% block content %}
+    <h1>Appraisal #{{ id }}</h1>
+    <h2>{{ appraisal.vehicle }}</h2>
+    <p><strong>Damage/Issue:</strong> {{ appraisal.issue }}</p>
+    <p><strong>Estimated Value:</strong> ${{ appraisal.value }}</p>
+    <p><strong>Status:</strong> {{ appraisal.status }}</p>
+    
+    <br>
+    <a href="{% url 'list' %}">Back to List</a>
+{% endblock %}
