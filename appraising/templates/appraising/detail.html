@@ -1,12 +1,35 @@
 {% extends 'appraising/layout.html' %}
 
 {% block content %}
-    <h1>Appraisal #{{ id }}</h1>
-    <h2>{{ appraisal.vehicle }}</h2>
-    <p><strong>Damage/Issue:</strong> {{ appraisal.issue }}</p>
-    <p><strong>Estimated Value:</strong> ${{ appraisal.value }}</p>
+    <h1>Claim: {{ appraisal.claim_number }}</h1>
+    <h2>{{ appraisal.vehicle_desc }}</h2>
+    <p><strong>Date Assigned:</strong> {{ appraisal.date_assigned }}</p>
     <p><strong>Status:</strong> {{ appraisal.status }}</p>
     
-    <br>
+    <hr>
+    <!-- REQUIRED RELATED RECORDS DISPLAY -->
+    <h3>Valuation History</h3>
+    <ul>
+        {% for val in appraisal.valuations.all %}
+            <li>
+                <strong>Market Value:</strong> ${{ val.market_value }} <br>
+                <strong>Diminished Value:</strong> ${{ val.diminished_value }} <br>
+                <strong>Notes:</strong> {{ val.negotiation_notes }}
+            </li>
+        {% empty %}
+            <li>No valuations recorded for this file yet.</li>
+        {% endfor %}
+    </ul>
+
+    <hr>
+    <!-- REQUIRED CUSTOM ACTION -->
+    {% if appraisal.status != 'Closed' %}
+    <form action="{% url 'close_appraisal' appraisal.id %}" method="POST" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" onclick="return confirm('Are you sure you want to close this file?');">Mark File Closed</button>
+    </form>
+    {% endif %}
+    
+    <br><br>
     <a href="{% url 'list' %}">Back to List</a>
 {% endblock %}
