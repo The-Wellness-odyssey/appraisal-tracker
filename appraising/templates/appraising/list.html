@@ -1,17 +1,19 @@
 {% extends 'appraising/layout.html' %}
 
 {% block content %}
-    <h1>All Appraisals</h1>
+    <h1>Active Appraisals</h1>
     <ul>
-        {% for id, app in appraisals.items %}
+        {% for app in appraisals %}
             <li>
-                <a href="{% url 'detail' id %}">{{ app.vehicle }}</a> - {{ app.issue }}
-                {% if app.value > 1000 %}
-                    <span class="badge">High Value</span>
+                <a href="{% url 'detail' app.id %}">{{ app.claim_number }} - {{ app.vehicle_desc }}</a> 
+                | Status: {{ app.status }}
+                {% if app.is_priority %}
+                    <span class="badge">PRIORITY</span>
                 {% endif %}
             </li>
         {% empty %}
-            <li>No appraisals currently logged.</li>
+            <!-- REQUIRED EMPTY STATE -->
+            <li>No active appraisals currently logged in the database.</li>
         {% endfor %}
     </ul>
 
@@ -20,7 +22,7 @@
         <h2>Recently Viewed</h2>
         <ul>
             {% for item in recently_viewed %}
-                <li>{{ item }}</li>
+                <li><a href="{% url 'detail' item.id %}">{{ item.claim_number }} - {{ item.vehicle_desc }}</a></li>
             {% endfor %}
         </ul>
     {% endif %}
