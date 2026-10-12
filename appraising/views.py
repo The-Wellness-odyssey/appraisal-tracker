@@ -1,53 +1,56 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from .models import AppraisalFile, VehicleValuation
 from .forms import AppraisalForm
-
-# Mock data dictionary acting as the temporary database
-appraisals = {
-    1: {'vehicle': '1998 Lexus ES300', 'issue': 'Rear bumper impact', 'value': 850, 'status': 'Open'},
-    2: {'vehicle': '2019 Porsche Cayenne', 'issue': 'Total loss valuation', 'value': 45000, 'status': 'Pending'},
-    3: {'vehicle': '2009 Toyota Camry Hybrid', 'issue': 'Structural assembly repair', 'value': 3200, 'status': 'Closed'}
-}
 
 def home(request):
     return render(request, 'appraising/home.html')
 
 def list_appraisals(request):
-    recently_viewed = request.session.get('recently_viewed', [])
+    # REQUIRED QUERY: Not just .all(). This filters out closed files and orders by date.
+    # Returns a QuerySet of active files, newest first.
+    active_appraisals = AppraisalFile.objects.exclude(status='Closed').order_by('-date_assigned')
+    
+    recently_viewed_ids = request.session.get('recently_viewed', [])
+    recently_viewed = AppraisalFile.objects.filter(id__in=recently_viewed_ids)
+
     return render(request, 'appraising/list.html', {
-        'appraisals': appraisals,
+        'appraisals': active_appraisals,
         'recently_viewed': recently_viewed
     })
 
 def detail(request, id):
-    appraisal = appraisals.get(id)
-    if appraisal:
-        # Session state: Update the recently viewed list
-        recently_viewed = request.session.get('recently_viewed', [])
-        if appraisal['vehicle'] not in recently_viewed:
-            recently_viewed.insert(0, appraisal['vehicle'])
-            request.session['recently_viewed'] = recently_viewed[:5] # Keep the last 5
+    # REQUIRED 404 HANDLING: Will throw a 404 page if the ID doesn't exist in the DB
+    appraisal = get_object_or_404(AppraisalFile, id=id)
     
-    return render(request, 'appraising/detail.html', {'id': id, 'appraisal': appraisal})
+    # Session state: Update recently viewed list with the database ID
+    recently_viewed = request.session.get('recently_viewed', [])
+    if id not in recently_viewed:
+        recently_viewed.insert(0, id)
+        request.session['recently_viewed'] = recently_viewed[:5]
+    
+    return render(request, 'appraising/detail.html', {'appraisal': appraisal})
 
 def add_appraisal(request):
-    # POST Branch
     if request.method == 'POST':
         form = AppraisalForm(request.POST)
         if form.is_valid():
-            new_id = max(appraisals.keys()) + 1 if appraisals else 1
-            appraisals[new_id] = {
-                'vehicle': form.cleaned_data['vehicle'],
-                'issue': form.cleaned_data['issue'],
-                'value': form.cleaned_data['value'],
-                'status': form.cleaned_data['status']
-            }
+            # Automatically writes the new row to the database
+            form.save()
             return redirect(reverse('list'))
-    # GET Branch
     else:
         form = AppraisalForm()
         
     return render(request, 'appraising/add.html', {'form': form})
 
+# REQUIRED CUSTOM ACTION: Mark an appraisal as closed
+def close_appraisal(request, id):
+    if request.method == 'POST':
+        appraisal = get_object_or_404(AppraisalFile, id=id)
+        appraisal.status = 'Closed'
+        appraisal.save()
+    return redirect(reverse('detail', args=[id]))
+
 def stats(request):
-    return render(request, 'appraising/stats.html')
+    total_open = AppraisalFile.objects.filter(status='Open').count()
+    return render(request, 'appraising/stats.html', {'total_open': total_open})
