@@ -14,4 +14,14 @@
             <li>No appraisals currently logged.</li>
         {% endfor %}
     </ul>
+
+    {% if recently_viewed %}
+        <hr>
+        <h2>Recently Viewed</h2>
+        <ul>
+            {% for item in recently_viewed %}
+                <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 {% endblock %}
