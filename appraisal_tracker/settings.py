@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,10 +20,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-u(&hty9!o#r84m1az8e+q)%u&kzmru6euvvd!$&csb+*1&6lz#'
+# Rotate the old key out and pull from the environment to keep it off GitHub.
+# If the environment variable isn't set, it uses an insecure default for local testing.
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-new-rotated-key-do-not-commit')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
