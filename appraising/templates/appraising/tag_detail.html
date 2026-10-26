@@ -1,0 +1,21 @@
+{% extends 'appraising/layout.html' %}
+
+{% block content %}
+    <h1>Tag: {{ tag.name }}</h1>
+    <p>{{ file_count }} appraisal file{{ file_count|pluralize }} with this tag</p>
+
+    <!-- Related records listed through related_name='appraisal_files' -->
+    <ul>
+        {% for app in tag.appraisal_files.all %}
+            <li>
+                <a href="{% url 'detail' app.id %}">{{ app.claim_number }} - {{ app.vehicle_desc }}</a>
+                | Status: {{ app.status }}
+                {% if app.is_priority %}<span class="badge">PRIORITY</span>{% endif %}
+            </li>
+        {% empty %}
+            <li>No appraisal files use this tag yet.</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'tag_list' %}">Back to Tags</a>
+{% endblock %}

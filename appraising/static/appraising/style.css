@@ -32,3 +32,34 @@ main {
     border-radius: 4px;
     font-size: 0.8rem;
 }
+.tag {
+    display: inline-block;
+    background-color: #e8eef6;
+    color: #24456b;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-right: 4px;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.search-form input {
+    padding: 6px;
+    width: 60%;
+}
+
+.data-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.data-table th,
+.data-table td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+    text-align: left;
+}
+
+.data-table th {
+    background-color: #f0f0f0;
+}

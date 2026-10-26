@@ -1,0 +1,40 @@
+{% extends 'appraising/layout.html' %}
+
+{% block content %}
+    <h1>Search Appraisals</h1>
+    <form method="GET" action="{% url 'search' %}" class="search-form">
+        <input type="text" name="q" value="{{ q }}" placeholder="Claim number or vehicle, e.g. Lexus">
+        <button type="submit">Search</button>
+    </form>
+
+    {% if q %}
+        <h2>{{ result_count }} result{{ result_count|pluralize }} for "{{ q }}"</h2>
+        <ul>
+            {% for app in results %}
+                <li>
+                    <a href="{% url 'detail' app.id %}">{{ app.claim_number }} - {{ app.vehicle_desc }}</a>
+                    | Status: {{ app.status }}
+                </li>
+            {% empty %}
+                <li>No appraisal files match "{{ q }}".</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <hr>
+    <h2>Top Five Valuations by Market Value</h2>
+    <table class="data-table">
+        <tr><th>#</th><th>Claim</th><th>Vehicle</th><th>Market Value</th><th>Diminished Value</th></tr>
+        {% for val in top_five %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><a href="{% url 'detail' val.appraisal_file.id %}">{{ val.appraisal_file.claim_number }}</a></td>
+                <td>{{ val.appraisal_file.vehicle_desc }}</td>
+                <td>${{ val.market_value }}</td>
+                <td>${{ val.diminished_value }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5">No valuations recorded yet.</td></tr>
+        {% endfor %}
+    </table>
+{% endblock %}

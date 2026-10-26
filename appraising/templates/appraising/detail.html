@@ -5,10 +5,17 @@
     <h2>{{ appraisal.vehicle_desc }}</h2>
     <p><strong>Date Assigned:</strong> {{ appraisal.date_assigned }}</p>
     <p><strong>Status:</strong> {{ appraisal.status }}</p>
+    <p><strong>Tags:</strong>
+        {% for tag in appraisal.tags.all %}
+            <a class="tag" href="{% url 'tag_detail' tag.id %}">{{ tag.name }}</a>
+        {% empty %}
+            None
+        {% endfor %}
+    </p>
     
     <hr>
     <!-- REQUIRED RELATED RECORDS DISPLAY -->
-    <h3>Valuation History</h3>
+    <h3>Valuation History ({{ valuation_count }} valuation{{ valuation_count|pluralize }})</h3>
     <ul>
         {% for val in appraisal.valuations.all %}
             <li>

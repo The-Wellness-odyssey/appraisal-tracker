@@ -1,0 +1,12 @@
+{% extends 'appraising/layout.html' %}
+
+{% block content %}
+    <h1>Tags</h1>
+    <ul>
+        {% for tag in tags %}
+            <li><a href="{% url 'tag_detail' tag.id %}">{{ tag.name }}</a> ({{ tag.file_count }} file{{ tag.file_count|pluralize }})</li>
+        {% empty %}
+            <li>No tags yet. Add some in the admin site.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

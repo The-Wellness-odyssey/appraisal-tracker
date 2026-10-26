@@ -2,6 +2,7 @@
 
 {% block content %}
     <h1>Active Appraisals</h1>
+    <p>{{ active_count }} active file{{ active_count|pluralize }}</p>
     <ul>
         {% for app in appraisals %}
             <li>
