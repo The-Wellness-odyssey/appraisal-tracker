@@ -2,7 +2,7 @@
 
 {% block content %}
     <h1>Add New Appraisal</h1>
-    <form action="{% url 'add' %}" method="POST">
+    <form action="{% url 'add' %}" method="POST" id="appraisal-form">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Submit Appraisal</button>

@@ -46,6 +46,18 @@ python manage.py createsuperuser
 ```
 Django will prompt for a username, email and password of your choosing. Log in at `/admin/` with those.
 
+## Client-side JavaScript
+All JavaScript lives in `appraising/static/appraising/app.js`, loaded once from `layout.html` with `<script src="{% static 'appraising/app.js' %}" defer>`. There is no JavaScript inside any template (the old inline `onclick` on the close button was moved into this file).
+
+| Interaction | Page | What it does |
+|---|---|---|
+| Live filter | Appraisals list | A filter box (created by JS) hides rows that don't match the typed claim number, vehicle or status, and updates a "Showing X of Y files" counter, with no page reload. |
+| Show / hide notes | Appraisal detail | Each valuation's notes start collapsed behind a "Show notes" button (created by JS); clicking toggles them. |
+| Client-side validation | Add Appraisal | On submit, empty required fields or values over the model's `max_length` get a red outline and an inline warning; the submit is cancelled until they are fixed. |
+| Confirm before closing | Appraisal detail | "Mark File Closed" asks for confirmation; Cancel stops the POST and the file stays open. |
+
+**Without JavaScript the app still works the same way it did before:** the list shows every file, notes are visible, the form posts to Django (which still validates it, including the unique claim number), and the close button closes the file directly.
+
 ## Tests
 ```bash
 python manage.py test

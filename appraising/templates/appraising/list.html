@@ -3,9 +3,9 @@
 {% block content %}
     <h1>Active Appraisals</h1>
     <p>{{ active_count }} active file{{ active_count|pluralize }}</p>
-    <ul>
+    <ul id="appraisal-list">
         {% for app in appraisals %}
-            <li>
+            <li class="appraisal-row" data-search="{{ app.claim_number }} {{ app.vehicle_desc }} {{ app.status }}">
                 <a href="{% url 'detail' app.id %}">{{ app.claim_number }} - {{ app.vehicle_desc }}</a> 
                 | Status: {{ app.status }}
                 {% if app.is_priority %}

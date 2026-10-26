@@ -63,3 +63,54 @@ main {
 .data-table th {
     background-color: #f0f0f0;
 }
+
+/* ---- Client-side interactivity (toggled by app.js with classList) ---- */
+.is-hidden,
+.is-collapsed {
+    display: none;
+}
+
+.inline-form {
+    display: inline;
+}
+
+.filter-box input {
+    padding: 6px;
+    width: 60%;
+}
+
+.filter-count {
+    color: #555;
+    font-size: 0.9rem;
+    margin: 6px 0 0;
+}
+
+.no-match {
+    color: #777;
+    font-style: italic;
+}
+
+.valuation {
+    margin-bottom: 10px;
+}
+
+.toggle-notes {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85rem;
+}
+
+.valuation-notes {
+    margin-top: 4px;
+}
+
+.has-error {
+    border: 2px solid #d9534f;
+    background-color: #fdf0f0;
+}
+
+.field-error {
+    color: #b52b27;
+    font-size: 0.9rem;
+    margin: 4px 0 0;
+}
