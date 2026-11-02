@@ -1,4 +1,5 @@
-from django.db.models import Count, Sum
+from django.db.models import Count, Max, Q, Sum
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from .models import AppraisalFile, VehicleValuation, Tag
@@ -91,4 +92,69 @@ def tag_detail(request, id):
     return render(request, 'appraising/tag_detail.html', {
         'tag': tag,
         'file_count': tag.appraisal_files.count(),
+    })
+
+
+def lookup(request):
+    """Live Lookup page. The results are filled in by lookup.js calling api_appraisals."""
+    return render(request, 'appraising/lookup.html', {
+        'status_choices': AppraisalFile._meta.get_field('status').choices,
+    })
+
+def api_appraisals(request):
+    """
+    JSON endpoint: GET /api/appraisals/
+
+    Query parameters (all optional):
+      q       - text matched against claim number or vehicle description (__icontains)
+      status  - one of Open, Pending, Settled, Closed (exact match)
+      limit   - how many rows to return, 1 to 50 (default 20)
+
+    Always answers with JSON, including when nothing matches (count 0, results []).
+    """
+    q = request.GET.get('q', '').strip()
+    status = request.GET.get('status', '').strip()
+    valid_statuses = [value for value, _ in AppraisalFile._meta.get_field('status').choices]
+
+    # Bad parameters get a JSON error with status 400, not an HTML error page
+    if status and status not in valid_statuses:
+        return JsonResponse({'error': f"status must be one of: {', '.join(valid_statuses)}"}, status=400)
+    try:
+        limit = int(request.GET.get('limit', 20))
+    except ValueError:
+        return JsonResponse({'error': 'limit must be a whole number'}, status=400)
+    limit = max(1, min(limit, 50))
+
+    files = AppraisalFile.objects.all()
+    if q:
+        files = files.filter(Q(claim_number__icontains=q) | Q(vehicle_desc__icontains=q))
+    if status:
+        files = files.filter(status=status)
+
+    files = (files.annotate(valuation_count=Count('valuations'),
+                            top_market_value=Max('valuations__market_value'))
+                  .prefetch_related('tags')
+                  .order_by('-date_assigned')[:limit])
+
+    # Serialise each row into a plain dictionary JsonResponse can turn into JSON
+    results = [
+        {
+            'id': f.id,
+            'claim_number': f.claim_number,
+            'vehicle': f.vehicle_desc,
+            'status': f.status,
+            'is_priority': f.is_priority,
+            'date_assigned': f.date_assigned.isoformat(),
+            'tags': [tag.name for tag in f.tags.all()],
+            'valuation_count': f.valuation_count,
+            'top_market_value': f.top_market_value,
+            'detail_url': reverse('detail', args=[f.id]),
+        }
+        for f in files
+    ]
+
+    return JsonResponse({
+        'query': {'q': q, 'status': status, 'limit': limit},
+        'count': len(results),
+        'results': results,
     })

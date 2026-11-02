@@ -114,3 +114,61 @@ main {
     font-size: 0.9rem;
     margin: 4px 0 0;
 }
+
+/* ---- Live Lookup (filled in by lookup.js) ---- */
+.lookup-form input {
+    padding: 6px;
+    width: 50%;
+}
+
+.lookup-form select {
+    padding: 5px;
+}
+
+.lookup-message {
+    margin: 12px 0 6px;
+    color: #555;
+}
+
+.lookup-message.is-loading-text {
+    color: #24456b;
+    font-style: italic;
+}
+
+.lookup-message.is-empty {
+    color: #777;
+    font-style: italic;
+}
+
+.lookup-message.is-error {
+    color: #b52b27;
+    background-color: #fdf0f0;
+    border-left: 4px solid #d9534f;
+    padding: 8px 10px;
+}
+
+.lookup-results {
+    list-style: none;
+    padding: 0;
+}
+
+.lookup-results.is-loading {
+    opacity: 0.4;
+}
+
+.lookup-card {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+}
+
+.lookup-title {
+    font-weight: bold;
+}
+
+.lookup-meta {
+    margin: 4px 0;
+    color: #444;
+    font-size: 0.92rem;
+}

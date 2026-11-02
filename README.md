@@ -58,6 +58,28 @@ All JavaScript lives in `appraising/static/appraising/app.js`, loaded once from 
 
 **Without JavaScript the app still works the same way it did before:** the list shows every file, notes are visible, the form posts to Django (which still validates it, including the unique claim number), and the close button closes the file directly.
 
+## JSON API
+`GET /api/appraisals/` (view: `api_appraisals` in `appraising/views.py`) returns real rows from the database as JSON through `JsonResponse`, not a template.
+
+| Parameter | What it filters | Example |
+|---|---|---|
+| `q` | claim number or vehicle description, case-insensitive (`__icontains`) | `/api/appraisals/?q=camry` |
+| `status` | exact status: Open, Pending, Settled or Closed | `/api/appraisals/?status=Open` |
+| `limit` | how many rows, 1 to 50 (default 20) | `/api/appraisals/?limit=2` |
+
+The response is `{"query": {...}, "count": N, "results": [ {...}, ... ]}`. Each result is a dictionary with the claim number, vehicle, status, priority flag, date assigned, tag names, valuation count, top market value and a link to the detail page.
+
+* **No matches** returns `200` with `"count": 0, "results": []`, which is still valid JSON.
+* **Bad parameters** (`limit=abc`, `status=Lost`) return `400` with `{"error": "..."}` instead of an HTML error page.
+
+## Live Lookup page
+`/lookup/` calls the API with `fetch()` from `appraising/static/appraising/lookup.js` and builds the result cards with `createElement`, with no page reload. It searches as you type (after a 300 ms pause), when the status dropdown changes, or when Search is pressed. It shows "Loading..." while waiting, an empty-state message when nothing matches, and a plain-English error from `.catch()` if the server is down, answers with an error, or sends invalid JSON. Without JavaScript, the same form submits to the server-rendered `/search/` page.
+
+## localStorage
+The Live Lookup page saves the **last search** under the key `appraisalTracker.lastLookup`, as `{"q": "camry", "status": "Pending"}`. When the page is reloaded or revisited, the box and dropdown are filled back in and the search runs again, so an appraiser working one claim doesn't have to retype it.
+
+**Why it's safe to store:** it is only the text the user typed and a status filter. No passwords, session tokens, or client details are saved, and the appraisal data itself is always fetched fresh from the server. localStorage stays in that one browser and is never sent to the server. If storage is blocked or the saved value is unreadable, the page simply starts with an empty search.
+
 ## Tests
 ```bash
 python manage.py test

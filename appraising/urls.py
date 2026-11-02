@@ -11,4 +11,6 @@ urlpatterns = [
     path('tags/', views.tag_list, name='tag_list'),
     path('tags/<int:id>/', views.tag_detail, name='tag_detail'),
     path('stats/', views.stats, name='stats'),
+    path('lookup/', views.lookup, name='lookup'),
+    path('api/appraisals/', views.api_appraisals, name='api_appraisals'),
 ]
