@@ -263,11 +263,21 @@ main {
     font-size: 0.9rem;
 }
 
+/* The pager is a <nav> too, so undo the dark site-header styles from the nav rules above */
 .pager {
     display: flex;
     align-items: center;
     gap: 16px;
     margin-top: 12px;
+    padding: 0;
+    background-color: transparent;
+}
+
+.pager a {
+    color: #0645ad;
+    text-decoration: underline;
+    font-weight: normal;
+    margin-right: 0;
 }
 
 .pager-label {
