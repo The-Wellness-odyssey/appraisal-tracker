@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.test import TestCase
 from django.urls import reverse
@@ -87,3 +87,55 @@ class AppraisalApiTests(TestCase):
 
     def test_lookup_page_renders(self):
         self.assertContains(self.client.get(reverse('lookup')), 'id="lookup-form"')
+
+
+class FilesSectionTests(TestCase):
+    """Pagination, detail and create endpoints behind the single-page Files section."""
+
+    def setUp(self):
+        for i in range(1, 26):
+            AppraisalFile.objects.create(claim_number=f"CLM-{i:03d}", vehicle_desc=f"Vehicle {i}",
+                                         date_assigned=date(2026, 1, 1) + timedelta(days=i))
+        self.api = reverse('api_appraisals')
+
+    def test_pages_are_sliced_on_the_server(self):
+        first = self.client.get(self.api, {'limit': 10, 'page': 1}).json()
+        last = self.client.get(self.api, {'limit': 10, 'page': 3}).json()
+        self.assertEqual((first['count'], first['total'], first['num_pages']), (10, 25, 3))
+        self.assertTrue(first['has_next'])
+        self.assertFalse(first['has_previous'])
+        self.assertEqual(last['count'], 5)
+        self.assertFalse(last['has_next'])
+        # Newest first, and no row appears on two pages
+        self.assertEqual(first['results'][0]['claim_number'], 'CLM-025')
+        ids = {r['id'] for p in (1, 2, 3) for r in self.client.get(self.api, {'limit': 10, 'page': p}).json()['results']}
+        self.assertEqual(len(ids), 25)
+
+    def test_page_out_of_range_and_bad_page(self):
+        self.assertEqual(self.client.get(self.api, {'limit': 10, 'page': 9}).status_code, 404)
+        self.assertEqual(self.client.get(self.api, {'page': 'two'}).status_code, 400)
+
+    def test_detail_endpoint(self):
+        f = AppraisalFile.objects.get(claim_number='CLM-007')
+        VehicleValuation.objects.create(appraisal_file=f, market_value=12000, diminished_value=900, negotiation_notes='n')
+        data = self.client.get(reverse('api_appraisal_detail', args=[f.id])).json()
+        self.assertEqual(data['claim_number'], 'CLM-007')
+        self.assertEqual(data['valuations'][0]['market_value'], 12000)
+        self.assertEqual(data['spa_url'], f'/files/{f.id}/')
+        self.assertEqual(self.client.get(reverse('api_appraisal_detail', args=[999])).status_code, 404)
+
+    def test_create_via_api(self):
+        ok = self.client.post(self.api, {'claim_number': 'CLM-100', 'vehicle_desc': '2007 Toyota Camry LE',
+                                         'date_assigned': '2026-11-01', 'status': 'Open'})
+        self.assertEqual(ok.status_code, 201)
+        self.assertEqual(ok.json()['claim_number'], 'CLM-100')
+        dup = self.client.post(self.api, {'claim_number': 'CLM-100', 'vehicle_desc': 'x',
+                                          'date_assigned': '2026-11-01', 'status': 'Open'})
+        self.assertEqual(dup.status_code, 400)
+        self.assertIn('claim_number', dup.json()['errors'])
+
+    def test_every_files_url_serves_the_shell(self):
+        f = AppraisalFile.objects.first()
+        for url in ('/files/', '/files/?page=2', '/files/new/', f'/files/{f.id}/'):
+            self.assertContains(self.client.get(url), 'id="files-app"')
+        self.assertEqual(self.client.get('/files/999/').status_code, 404)

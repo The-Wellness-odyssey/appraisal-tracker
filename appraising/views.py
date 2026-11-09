@@ -101,17 +101,46 @@ def lookup(request):
         'status_choices': AppraisalFile._meta.get_field('status').choices,
     })
 
+def serialize_file(f):
+    """Turn one AppraisalFile into a plain dictionary JsonResponse can send.
+    Expects valuation_count and top_market_value to be annotated on the row."""
+    return {
+        'id': f.id,
+        'claim_number': f.claim_number,
+        'vehicle': f.vehicle_desc,
+        'status': f.status,
+        'is_priority': f.is_priority,
+        'date_assigned': f.date_assigned.isoformat(),
+        'tags': [tag.name for tag in f.tags.all()],
+        'valuation_count': f.valuation_count,
+        'top_market_value': f.top_market_value,
+        'detail_url': reverse('detail', args=[f.id]),
+        'spa_url': reverse('spa_detail', args=[f.id]),
+    }
+
+def annotated_files():
+    """All appraisal files with their valuation count and top market value attached."""
+    return (AppraisalFile.objects
+            .annotate(valuation_count=Count('valuations'), top_market_value=Max('valuations__market_value'))
+            .prefetch_related('tags'))
+
 def api_appraisals(request):
     """
-    JSON endpoint: GET /api/appraisals/
+    JSON endpoint: /api/appraisals/
 
-    Query parameters (all optional):
+    GET returns one page of appraisal files. Query parameters (all optional):
       q       - text matched against claim number or vehicle description (__icontains)
       status  - one of Open, Pending, Settled, Closed (exact match)
-      limit   - how many rows to return, 1 to 50 (default 20)
+      limit   - rows per page, 1 to 50 (default 20)
+      page    - which page, starting at 1 (default 1)
+
+    POST creates a new file from form data (used by the Files section's create view).
 
     Always answers with JSON, including when nothing matches (count 0, results []).
     """
+    if request.method == 'POST':
+        return api_create_appraisal(request)
+
     q = request.GET.get('q', '').strip()
     status = request.GET.get('status', '').strip()
     valid_statuses = [value for value, _ in AppraisalFile._meta.get_field('status').choices]
@@ -121,40 +150,70 @@ def api_appraisals(request):
         return JsonResponse({'error': f"status must be one of: {', '.join(valid_statuses)}"}, status=400)
     try:
         limit = int(request.GET.get('limit', 20))
+        page = int(request.GET.get('page', 1))
     except ValueError:
-        return JsonResponse({'error': 'limit must be a whole number'}, status=400)
+        return JsonResponse({'error': 'limit and page must be whole numbers'}, status=400)
     limit = max(1, min(limit, 50))
+    page = max(1, page)
 
-    files = AppraisalFile.objects.all()
+    files = annotated_files()
     if q:
         files = files.filter(Q(claim_number__icontains=q) | Q(vehicle_desc__icontains=q))
     if status:
         files = files.filter(status=status)
 
-    files = (files.annotate(valuation_count=Count('valuations'),
-                            top_market_value=Max('valuations__market_value'))
-                  .prefetch_related('tags')
-                  .order_by('-date_assigned')[:limit])
+    # Pagination happens here in the database query, not in the browser:
+    # count the matches, then slice out only this page's rows (LIMIT/OFFSET in SQL).
+    total = files.count()
+    num_pages = max(1, (total + limit - 1) // limit)
+    if page > num_pages:
+        return JsonResponse({'error': f'page {page} does not exist; there are {num_pages}'}, status=404)
+    start = (page - 1) * limit
+    rows = files.order_by('-date_assigned', '-id')[start:start + limit]
 
-    # Serialise each row into a plain dictionary JsonResponse can turn into JSON
-    results = [
-        {
-            'id': f.id,
-            'claim_number': f.claim_number,
-            'vehicle': f.vehicle_desc,
-            'status': f.status,
-            'is_priority': f.is_priority,
-            'date_assigned': f.date_assigned.isoformat(),
-            'tags': [tag.name for tag in f.tags.all()],
-            'valuation_count': f.valuation_count,
-            'top_market_value': f.top_market_value,
-            'detail_url': reverse('detail', args=[f.id]),
-        }
-        for f in files
-    ]
+    results = [serialize_file(f) for f in rows]
 
     return JsonResponse({
-        'query': {'q': q, 'status': status, 'limit': limit},
+        'query': {'q': q, 'status': status, 'limit': limit, 'page': page},
         'count': len(results),
+        'total': total,
+        'page': page,
+        'num_pages': num_pages,
+        'has_previous': page > 1,
+        'has_next': page < num_pages,
         'results': results,
     })
+
+def api_create_appraisal(request):
+    """POST /api/appraisals/ - validate with the same AppraisalForm as the classic Add page.
+    201 with the new file on success, 400 with field errors otherwise."""
+    form = AppraisalForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({'errors': {field: [e['message'] for e in errs]
+                                        for field, errs in form.errors.get_json_data().items()}}, status=400)
+    new_file = form.save()
+    return JsonResponse(serialize_file(annotated_files().get(id=new_file.id)), status=201)
+
+def api_appraisal_detail(request, id):
+    """GET /api/appraisals/<id>/ - one file with its valuations. Missing ids get a 404."""
+    appraisal = get_object_or_404(annotated_files(), id=id)
+    data = serialize_file(appraisal)
+    data['valuations'] = [
+        {
+            'market_value': v.market_value,
+            'diminished_value': v.diminished_value,
+            'notes': v.negotiation_notes,
+        }
+        for v in appraisal.valuations.order_by('id')
+    ]
+    return JsonResponse(data)
+
+def files_app(request, id=None):
+    """
+    The single-page Files section. /files/, /files/new/ and /files/<id>/ all return
+    this same shell; spa.js reads the URL and shows the matching view.
+    A missing id still gets a real 404 here, so a bad link is not a 200 page.
+    """
+    if id is not None:
+        get_object_or_404(AppraisalFile, id=id)
+    return render(request, 'appraising/files_app.html', {'form': AppraisalForm()})

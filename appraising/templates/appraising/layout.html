@@ -7,11 +7,13 @@
     <link rel="stylesheet" href="{% static 'appraising/style.css' %}">
     <script src="{% static 'appraising/app.js' %}" defer></script>
     <script src="{% static 'appraising/lookup.js' %}" defer></script>
+    <script src="{% static 'appraising/spa.js' %}" defer></script>
 </head>
 <body>
     <nav>
         <a href="{% url 'home' %}">Home</a>
         <a href="{% url 'list' %}">Appraisals</a>
+        <a href="{% url 'spa_list' %}">Files</a>
         <a href="{% url 'add' %}">Add Appraisal</a>
         <a href="{% url 'search' %}">Search</a>
         <a href="{% url 'lookup' %}">Live Lookup</a>

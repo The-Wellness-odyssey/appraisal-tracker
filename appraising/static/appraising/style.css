@@ -172,3 +172,143 @@ main {
     color: #444;
     font-size: 0.92rem;
 }
+
+/* ---- Single-page Files section (views switched by spa.js) ---- */
+
+/* Each view starts invisible and slightly lower; .is-active fades and slides it in */
+.spa-view {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.spa-view.is-active {
+    opacity: 1;
+    transform: none;
+}
+
+/* While the next view's data is loading, the current one fades back */
+.files-app.is-busy .spa-view.is-active {
+    opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spa-view {
+        transition: none;
+        transform: none;
+    }
+}
+
+.spa-status {
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.spa-status.is-loading {
+    background-color: #e8eef6;
+    color: #24456b;
+    font-style: italic;
+}
+
+.spa-status.is-error {
+    background-color: #fdf0f0;
+    color: #b52b27;
+    border-left: 4px solid #d9534f;
+}
+
+.spa-status button {
+    margin-left: 8px;
+}
+
+.spa-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.button-link {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #24456b;
+    color: #fff;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
+.spa-summary {
+    color: #555;
+}
+
+.spa-rows {
+    list-style: none;
+    padding: 0;
+}
+
+.spa-row {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+}
+
+.spa-row-link {
+    font-weight: bold;
+}
+
+.spa-row-meta {
+    margin: 3px 0 0;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.pager {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.pager-label {
+    color: #555;
+}
+
+.spa-facts {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 4px 16px;
+}
+
+.spa-facts dt {
+    font-weight: bold;
+}
+
+.spa-facts dd {
+    margin: 0;
+}
+
+.spa-note {
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Visible focus ring for keyboard users on links and buttons */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 3px solid #2b6cb0;
+    outline-offset: 2px;
+}
+
+/* Headings get focus from spa.js after a view change; no ring needed there */
+.spa-view h1:focus {
+    outline: none;
+}

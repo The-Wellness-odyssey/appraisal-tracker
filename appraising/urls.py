@@ -13,4 +13,9 @@ urlpatterns = [
     path('stats/', views.stats, name='stats'),
     path('lookup/', views.lookup, name='lookup'),
     path('api/appraisals/', views.api_appraisals, name='api_appraisals'),
+    path('api/appraisals/<int:id>/', views.api_appraisal_detail, name='api_appraisal_detail'),
+    # Single-page Files section: three URLs, one shell, spa.js picks the view
+    path('files/', views.files_app, name='spa_list'),
+    path('files/new/', views.files_app, name='spa_create'),
+    path('files/<int:id>/', views.files_app, name='spa_detail'),
 ]

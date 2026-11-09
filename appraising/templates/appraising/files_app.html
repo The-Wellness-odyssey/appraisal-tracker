@@ -1,0 +1,64 @@
+{% extends 'appraising/layout.html' %}
+
+{% block content %}
+<!--
+  Single-page Files section. Django returns this same shell for /files/, /files/new/
+  and /files/<id>/. spa.js reads the URL, fetches JSON from /api/appraisals/, and
+  shows one of the <section> views below. No whole HTML pages are fetched.
+-->
+<div id="files-app" class="files-app"
+     data-api="{% url 'api_appraisals' %}" data-base="{% url 'spa_list' %}">
+
+    <noscript>
+        <p class="field-error">This section needs JavaScript. The <a href="{% url 'list' %}">classic Appraisals pages</a> work without it.</p>
+    </noscript>
+
+    <div id="spa-status" class="spa-status is-hidden" role="status" aria-live="polite"></div>
+
+    <!-- View 1: paginated list -->
+    <section id="view-list" class="spa-view" data-view="list" aria-labelledby="list-heading" hidden>
+        <div class="spa-header">
+            <h1 id="list-heading" tabindex="-1">Appraisal Files</h1>
+            <a href="{% url 'spa_create' %}" class="button-link" data-spa-link>New file</a>
+        </div>
+        <p id="list-summary" class="spa-summary"></p>
+        <ul id="list-rows" class="spa-rows"></ul>
+        <nav class="pager" aria-label="Pages of appraisal files">
+            <a id="pager-prev" href="{% url 'spa_list' %}" data-spa-link rel="prev">Previous</a>
+            <span id="pager-label" class="pager-label"></span>
+            <a id="pager-next" href="{% url 'spa_list' %}" data-spa-link rel="next">Next</a>
+        </nav>
+    </section>
+
+    <!-- View 2: one file -->
+    <section id="view-detail" class="spa-view" data-view="detail" aria-labelledby="detail-heading" hidden>
+        <a id="detail-back" href="{% url 'spa_list' %}" data-spa-link>Back to all files</a>
+        <h1 id="detail-heading" tabindex="-1"></h1>
+        <dl id="detail-facts" class="spa-facts"></dl>
+        <h2 id="detail-valuations-heading">Valuations</h2>
+        <ul id="detail-valuations" class="spa-valuations"></ul>
+        <p class="spa-note">To close this file, use the <a id="detail-classic" href="{% url 'list' %}">full file page</a>.</p>
+    </section>
+
+    <!-- View 3: create form. Without JavaScript it posts to the classic Add view. -->
+    <section id="view-create" class="spa-view" data-view="create" aria-labelledby="create-heading" hidden>
+        <h1 id="create-heading" tabindex="-1">New Appraisal File</h1>
+        <form id="spa-create-form" action="{% url 'add' %}" method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <p id="create-errors" class="field-error is-hidden"></p>
+            <div class="form-actions">
+                <button type="submit" id="create-submit">Save file</button>
+                <a href="{% url 'spa_list' %}" data-spa-link>Cancel</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Shown for a URL inside /files/ that matches no view, or a file that no longer exists -->
+    <section id="view-missing" class="spa-view" data-view="missing" aria-labelledby="missing-heading" hidden>
+        <h1 id="missing-heading" tabindex="-1">Not found</h1>
+        <p id="missing-message"></p>
+        <a href="{% url 'spa_list' %}" data-spa-link>Go to all files</a>
+    </section>
+</div>
+{% endblock %}

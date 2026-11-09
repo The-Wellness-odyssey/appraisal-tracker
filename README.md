@@ -80,6 +80,27 @@ The Live Lookup page saves the **last search** under the key `appraisalTracker.l
 
 **Why it's safe to store:** it is only the text the user typed and a status filter. No passwords, session tokens, or client details are saved, and the appraisal data itself is always fetched fresh from the server. localStorage stays in that one browser and is never sent to the server. If storage is blocked or the saved value is unreadable, the page simply starts with an empty search.
 
+## Single-page Files section
+The **Files** link in the nav (`/files/`) is a single-page version of the Appraisals section. It has three views that switch without a page reload:
+
+| View | URL | Data from |
+|---|---|---|
+| List, 10 per page | `/files/` and `/files/?page=2` | `GET /api/appraisals/?limit=10&page=2` |
+| One file | `/files/<id>/` | `GET /api/appraisals/<id>/` |
+| Create form | `/files/new/` | `POST /api/appraisals/` (validated by the same `AppraisalForm`) |
+
+How it works (`appraising/static/appraising/spa.js`):
+* **One shell, three URLs.** Django serves the same template (`files_app.html`) for every `/files/` URL, so any of them can be loaded directly, bookmarked or shared. A missing file id still gets a real 404 from Django.
+* **Links** inside the section are real `<a href>` links marked `data-spa-link`. A click is intercepted, `history.pushState()` changes the URL, and `render()` fetches JSON and shows the matching `<section>`. Ctrl/Cmd-click still opens a new tab.
+* **Back and Forward** fire `popstate`; the handler calls the same `render()`, which reads the URL and shows that view. Scroll position is saved on each history entry and put back on Back.
+* **Pagination** is done in the Django view: it counts the matches and slices only that page's rows out of the query (`[start:start + limit]`, which becomes `LIMIT/OFFSET` in SQL).
+* **Transition:** views fade and slide in through the `.spa-view` / `.is-active` CSS classes; `prefers-reduced-motion` turns it off.
+* **Loading and errors:** a status bar shows "Loading..." during each fetch, and a "Try again" `<button>` if the request fails.
+* **Keyboard:** everything clickable is a link or `<button>`, and focus moves to the new view's heading after each change.
+* After saving a new file, the URL is **replaced** rather than pushed, so Back from the new file goes to the list instead of an already-submitted form.
+
+The classic server-rendered pages under `/appraisals/` are unchanged and still work without JavaScript.
+
 ## Tests
 ```bash
 python manage.py test
