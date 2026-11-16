@@ -1,4 +1,6 @@
 # Vehicle Appraisal Tracker
+[![Tests](https://github.com/The-Wellness-odyssey/appraisal-tracker/actions/workflows/tests.yml/badge.svg)](https://github.com/The-Wellness-odyssey/appraisal-tracker/actions/workflows/tests.yml)
+
 A Django application for tracking vehicle damage evaluations and diminished value assessments.
 
 ## Getting Started
@@ -103,5 +105,16 @@ The classic server-rendered pages under `/appraisals/` are unchanged and still w
 
 ## Tests
 ```bash
-python manage.py test
+python manage.py test          # add -v 2 to see every test name
 ```
+`appraising/tests.py` has 37 tests in five groups, each with a comment saying what it protects:
+
+| Group | Protects |
+|---|---|
+| Model tests | how files, tags and valuations print (`__str__`), new-file defaults, unique claim numbers, tag order |
+| View tests | list, detail, stats, search, tag and add pages; 404s for missing ids; closing a file only on POST |
+| Form tests | `AppraisalForm` accepts good data and rejects missing fields, duplicates, over-long text, unknown statuses and future dates |
+| Relationship tests | a file's valuations through `related_name`, cascade delete, tags in both directions |
+| API tests | the JSON endpoint, pagination, detail and create, and the single-page Files URLs |
+
+**Continuous integration:** `.github/workflows/tests.yml` runs `python manage.py test` on GitHub for every push and pull request (Python 3.13, dependencies from `requirements.txt`). The badge at the top of this README shows the latest result.
