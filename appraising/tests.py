@@ -17,6 +17,7 @@ from datetime import date, timedelta
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .forms import AppraisalForm
 from .models import AppraisalFile, VehicleValuation, Tag
@@ -201,6 +202,17 @@ class AppraisalFormTests(TestCase):
         form = AppraisalForm(data={**self.valid, 'vehicle_desc': 'x' * 101})
         self.assertFalse(form.is_valid())
         self.assertIn('vehicle_desc', form.errors)
+
+    # Makes sure nobody can save a file assigned in the future (a typo like 2062 for 2026
+    # would otherwise sit at the top of every "newest first" list), while today still works.
+    # Written before the rule existed: it failed first, then the form was changed to pass it.
+    def test_future_date_assigned_is_rejected(self):
+        today = timezone.localdate()
+        future = AppraisalForm(data={**self.valid, 'date_assigned': (today + timedelta(days=1)).isoformat()})
+        self.assertFalse(future.is_valid())
+        self.assertIn('date_assigned', future.errors)
+        self.assertIn("can't be in the future", future.errors['date_assigned'][0])
+        self.assertTrue(AppraisalForm(data={**self.valid, 'date_assigned': today.isoformat()}).is_valid())
 
     # Makes sure only the four real statuses can be saved, not a made-up one.
     def test_unknown_status_is_rejected(self):
