@@ -27,7 +27,7 @@ class AppraisalFile(models.Model):
     tags = models.ManyToManyField(Tag, related_name='appraisal_files', blank=True)
 
     def __str__(self):
-        return f"{self.claim_number} - {self.vehicle_desc}"
+        return f"{self.claim_number}: {self.vehicle_desc}"
 
 
 class VehicleValuation(models.Model):
